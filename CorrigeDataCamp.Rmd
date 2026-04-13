@@ -9,22 +9,32 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+# Búsqueda y lectura de los archivos
+```{r}
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# Definir ruta:
+ruta_entregas <- "./data/CorrigeDataCamp"
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# Búsqueda automatizada de los ficheros de puntuaciones:
+ficheros_puntos <- list.files(
+  path = ruta_entregas, 
+  pattern = "puntos.*\\.txt$",   # Expresión regular para localizar ".txt"
+  recursive = TRUE,              # Subcarpetas de los alumnos automáticamente
+  ignore.case = TRUE,            # Ignora mayúsculas o minúsculas
+  full.names = TRUE)             # Devuelve ruta completa (poder leer el archivo después)
 
-```{r cars}
-summary(cars)
+# Búsqueda automatizada de los ficheros de los certificados:
+ficheros_justificantes <- list.files(
+  path = ruta_entregas, 
+  pattern = "certificate.*\\.pdf$", # Expresión regular ajustada al nombre del certificado en pdf
+  recursive = TRUE,
+  ignore.case = TRUE, 
+  full.names = TRUE)
+
+# Comprobar los primeros resultados encontrados:
+head(ficheros_puntos)
+head(ficheros_justificantes)
+
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
