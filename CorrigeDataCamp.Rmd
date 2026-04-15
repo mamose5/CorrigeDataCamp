@@ -38,3 +38,33 @@ head(ficheros_justificantes)
 ```
 
 
+# Limpieza, extracción de apellidos y lectura de notas
+```{r}
+
+# Extraemos solo el nombre final del archivo a partir de la ruta completa
+nombres_archivos <- basename(ficheros_puntos)
+print(table(nombres_archivos)) # cuántas veces aparece cada variante
+
+# Extraer apellidos de la ruta (strsplit())
+partes_ruta <- strsplit(ficheros_puntos, "/")
+
+# El penúltimo elemento de la ruta es la carpeta del alumno 
+nombres_carpetas <- sapply(partes_ruta, function(x) x[length(x) - 1])
+
+# Como la carpeta se llama "Apellidos, Nombre", cortamos de nuevo por la coma ","
+apellidos <- sapply(strsplit(nombres_carpetas, ","), function(x) trimws(x[1]))
+
+# Importar ficheros y extraer la puntuación (readLines())
+puntos_leidos <- sapply(ficheros_puntos, function(x) readLines(x, warn = FALSE)[1]) 
+# abre el texto y lee sus líneas. Nos quedamos con la primera línea [1]
+
+# Comprobar si todas las entregas contienen el fichero de puntos y el justificante
+# Extraemos de igual forma los nombres de las carpetas de los justificantes
+carpetas_justificantes <- sapply(strsplit(ficheros_justificantes, "/"), function(x) x[length(x) - 1])
+
+# Comparamos si la carpeta del alumno aparece también en la lista de justificantes
+entregaron_ambos <- nombres_carpetas %in% carpetas_justificantes
+print(table(entregaron_ambos)) # TRUE significa que sí están los dos archivos
+
+```
+
