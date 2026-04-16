@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 
 # Definir ruta:
-ruta_entregas <- "./data/CorrigeDataCamp"
+ruta_entregas <- "./data"
 
 # Búsqueda automatizada de los ficheros de puntuaciones:
 ficheros_puntos <- list.files(
@@ -52,7 +52,7 @@ partes_ruta <- strsplit(ficheros_puntos, "/")
 nombres_carpetas <- sapply(partes_ruta, function(x) x[length(x) - 1])
 
 # Como la carpeta se llama "Apellidos, Nombre", cortamos de nuevo por la coma ","
-apellidos <- sapply(strsplit(nombres_carpetas, ","), function(x) trimws(x[1]))
+apellidos <- sapply(strsplit(as.character(nombres_carpetas), ","), function(x) trimws(x[1]))
 
 # Importar ficheros y extraer la puntuación (readLines())
 puntos_leidos <- sapply(ficheros_puntos, function(x) readLines(x, warn = FALSE)[1]) 
@@ -68,3 +68,29 @@ print(table(entregaron_ambos)) # TRUE significa que sí están los dos archivos
 
 ```
 
+
+# Creación del Data Frame intermedio y ordenación
+```{r}
+
+library(dplyr)
+library(rio)
+
+# Crear el Data Frame combinando las variables del paso anterior
+evalua_df <- data.frame(
+  apellidos = apellidos,
+  puntos = as.numeric(puntos_leidos), # Convertimos a número
+  NomFile = nombres_archivos,
+  Puntos = puntos_leidos              # Se guarda el texto leído
+)
+
+# Ordenar el Data Frame alfabéticamente (por columna "apellidos")
+evalua_df <- evalua_df %>%
+  arrange(apellidos)                  # De forma creciente por defecto
+
+# Comprobar visualmente el orden
+head(evalua_df)
+
+# Exportar el resultado a Excel
+export(evalua_df, "NotasRIntermedio.xlsx")
+
+```
