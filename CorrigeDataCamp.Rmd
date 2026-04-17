@@ -45,19 +45,19 @@ head(ficheros_justificantes)
 # Limpieza, extracción de apellidos y lectura de notas
 ```{r}
 
-# Extraer nombre final del archivo y contar variantes
+# Extraer nombre final del archivo y contar variantes:
 nombres_archivos <- basename(ficheros_puntos)
 print(table(nombres_archivos)) 
 
-# Extraer apellidos aislando la carpeta del alumno en la ruta
+# Extraer apellidos aislando la carpeta del alumno en la ruta:
 partes_ruta <- strsplit(ficheros_puntos, "/")
 nombres_carpetas <- sapply(partes_ruta, function(x) x[length(x) - 1]) # Penúltimo elemento de la ruta es carpeta del alumno 
 apellidos <- sapply(strsplit(as.character(nombres_carpetas), ","), function(x) trimws(x[1])) # Cortamos de nuevo por la coma "," ("Apellidos, Nombre")
   
-# Leer puntuación uniendo posibles saltos de línea
+# Leer puntuación uniendo posibles saltos de línea:
 puntos_leidos <- sapply(ficheros_puntos, function(x) paste(readLines(x, warn = FALSE), collapse = " ")) 
 
-# Comprobar si existen ambos ficheros (puntos y justificante) por alumno
+# Comprobar si existen ambos ficheros (puntos y justificante) por alumno:
 carpetas_justificantes <- sapply(strsplit(ficheros_justificantes, "/"), function(x) x[length(x) - 1])
 entregaron_ambos <- nombres_carpetas %in% carpetas_justificantes
 print(table(entregaron_ambos)) # TRUE si sí están los dos archivos
@@ -72,7 +72,7 @@ library(dplyr)
 library(rio)
 library(stringr)
 
-# Crear Data Frame con los datos extraídos
+# Crear Data Frame con los datos extraídos:
 evalua_df <- data.frame(
   apellidos = apellidos,
   puntos = as.numeric(gsub("[^0-9]", "", puntos_leidos)),
@@ -80,14 +80,14 @@ evalua_df <- data.frame(
   Puntos = puntos_leidos              
 )
 
-# Ordenar alfabéticamente por apellidos
+# Ordenar alfabéticamente por apellidos:
 evalua_df <- evalua_df %>%
   arrange(apellidos)                  # De forma creciente por defecto
 
 # Comprobar el orden
 head(evalua_df)
 
-# Exportar el resultado a Excel
+# Exportar el resultado a Excel:
 export(evalua_df, "NotasRIntermedio.xlsx")
 
 ```
@@ -96,17 +96,16 @@ export(evalua_df, "NotasRIntermedio.xlsx")
 # Fusión de datos
 ```{r}
 
-# Importar el archivo Excel de todos los alumnos matriculados
+# Importar el archivo Excel de todos los alumnos matriculados:
 alumnos_df <- import("./data/AlumnosTD25_26.xlsx")
 
-# Fusionar datos emparejando por apellidos (mantiene a todos los matriculados)
+# Fusionar datos emparejando por apellidos (mantiene a todos los matriculados):
 alumnos_notas <- left_join(alumnos_df, evalua_df, by = c("Apellido(s)" = "apellidos"))
 
-
-# Comprobación tabla final
+# Comprobación tabla final:
 head(alumnos_notas)
 
-# Exportar el data frame final a Excel
+# Exportar el data frame final a Excel:
 export(alumnos_notas, "AlumnosNotas.xlsx")
 
 ```
