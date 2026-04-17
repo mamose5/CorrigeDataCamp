@@ -12,18 +12,22 @@ knitr::opts_chunk$set(echo = TRUE)
 # Búsqueda y lectura de los archivos
 ```{r}
 
+# Descomprimir el archivo ZIP:
+archivo_zip <- "./data/2025-26 Tractament de les dades Gr.A-T (36423)-Tarea Intermediate R(Datacamp)-3281647.zip"
+unzip(zipfile = archivo_zip, exdir = "./data")
+
 # Definir ruta:
 ruta_entregas <- "./data"
 
-# Búsqueda automatizada de los ficheros de puntuaciones:
+# Buscar ficheros de puntuaciones:
 ficheros_puntos <- list.files(
   path = ruta_entregas, 
   pattern = "puntos.*\\.txt$",   # Expresión regular para localizar ".txt"
-  recursive = TRUE,              # Subcarpetas de los alumnos automáticamente
+  recursive = TRUE,              # Subcarpetas de los alumnos 
   ignore.case = TRUE,            # Ignora mayúsculas o minúsculas
-  full.names = TRUE)             # Devuelve ruta completa (poder leer el archivo después)
+  full.names = TRUE)             # Devuelve ruta completa
 
-# Búsqueda automatizada de los ficheros de los certificados:
+# Buscar ficheros de certificados:
 ficheros_justificantes <- list.files(
   path = ruta_entregas, 
   pattern = "certificate.*\\.pdf$", # Expresión regular ajustada al nombre del certificado en pdf
@@ -41,31 +45,22 @@ head(ficheros_justificantes)
 # Limpieza, extracción de apellidos y lectura de notas
 ```{r}
 
-# Extraemos solo el nombre final del archivo a partir de la ruta completa
+# Extraer nombre final del archivo y contar variantes
 nombres_archivos <- basename(ficheros_puntos)
-print(table(nombres_archivos)) # cuántas veces aparece cada variante
+print(table(nombres_archivos)) 
 
-# Extraer apellidos de la ruta (strsplit())
+# Extraer apellidos aislando la carpeta del alumno en la ruta
 partes_ruta <- strsplit(ficheros_puntos, "/")
-
-# El penúltimo elemento de la ruta es la carpeta del alumno 
-nombres_carpetas <- sapply(partes_ruta, function(x) x[length(x) - 1])
-
-# Como la carpeta se llama "Apellidos, Nombre", cortamos de nuevo por la coma ","
-apellidos <- sapply(strsplit(as.character(nombres_carpetas), ","), function(x) trimws(x[1]))
+nombres_carpetas <- sapply(partes_ruta, function(x) x[length(x) - 1]) # Penúltimo elemento de la ruta es carpeta del alumno 
+apellidos <- sapply(strsplit(as.character(nombres_carpetas), ","), function(x) trimws(x[1])) # Cortamos de nuevo por la coma "," ("Apellidos, Nombre")
   
-# Importar ficheros y extraer la puntuación (readLines())
+# Leer puntuación uniendo posibles saltos de línea
 puntos_leidos <- sapply(ficheros_puntos, function(x) paste(readLines(x, warn = FALSE), collapse = " ")) 
-# Usamos paste con collapse=" " para unir todas las líneas (por si hay espacios o saltos de línea)
 
-
-# Comprobar si todas las entregas contienen el fichero de puntos y el justificante
-# Extraemos de igual forma los nombres de las carpetas de los justificantes
+# Comprobar si existen ambos ficheros (puntos y justificante) por alumno
 carpetas_justificantes <- sapply(strsplit(ficheros_justificantes, "/"), function(x) x[length(x) - 1])
-
-# Comparamos si la carpeta del alumno aparece también en la lista de justificantes
 entregaron_ambos <- nombres_carpetas %in% carpetas_justificantes
-print(table(entregaron_ambos)) # TRUE significa que sí están los dos archivos
+print(table(entregaron_ambos)) # TRUE si sí están los dos archivos
 
 ```
 
@@ -77,19 +72,19 @@ library(dplyr)
 library(rio)
 library(stringr)
 
-# Crear el Data Frame combinando las variables del paso anterior
+# Crear Data Frame con los datos extraídos
 evalua_df <- data.frame(
   apellidos = apellidos,
-  puntos = as.numeric(str_extract(puntos_leidos, "\\d+")),
+  puntos = as.numeric(gsub("[^0-9]", "", puntos_leidos)),
   NomFile = nombres_archivos,
-  Puntos = puntos_leidos              # Se guarda el texto leído
+  Puntos = puntos_leidos              
 )
 
-# Ordenar el Data Frame alfabéticamente (por columna "apellidos")
+# Ordenar alfabéticamente por apellidos
 evalua_df <- evalua_df %>%
   arrange(apellidos)                  # De forma creciente por defecto
 
-# Comprobar visualmente el orden
+# Comprobar el orden
 head(evalua_df)
 
 # Exportar el resultado a Excel
@@ -101,17 +96,14 @@ export(evalua_df, "NotasRIntermedio.xlsx")
 # Fusión de datos
 ```{r}
 
-# Importar el archivo Excel con todos los alumnos matriculados
+# Importar el archivo Excel de todos los alumnos matriculados
 alumnos_df <- import("./data/AlumnosTD25_26.xlsx")
 
-# Fusionar los datos (left_join())
-# (Manteniendo todos los registros del primer df y añadiendo los datos del segundo si hay coincidencias.)
-# Fusionar los datos (left_join())
-# Ahora que la tabla tiene datos, le decimos directamente que empareje las dos columnas de apellidos
+# Fusionar datos emparejando por apellidos (mantiene a todos los matriculados)
 alumnos_notas <- left_join(alumnos_df, evalua_df, by = c("Apellido(s)" = "apellidos"))
 
 
-# Comprobamos la tabla final
+# Comprobación tabla final
 head(alumnos_notas)
 
 # Exportar el data frame final a Excel
