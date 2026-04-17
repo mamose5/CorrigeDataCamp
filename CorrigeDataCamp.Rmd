@@ -53,10 +53,11 @@ nombres_carpetas <- sapply(partes_ruta, function(x) x[length(x) - 1])
 
 # Como la carpeta se llama "Apellidos, Nombre", cortamos de nuevo por la coma ","
 apellidos <- sapply(strsplit(as.character(nombres_carpetas), ","), function(x) trimws(x[1]))
-
+  
 # Importar ficheros y extraer la puntuación (readLines())
-puntos_leidos <- sapply(ficheros_puntos, function(x) readLines(x, warn = FALSE)[1]) 
-# abre el texto y lee sus líneas. Nos quedamos con la primera línea [1]
+puntos_leidos <- sapply(ficheros_puntos, function(x) paste(readLines(x, warn = FALSE), collapse = " ")) 
+# Usamos paste con collapse=" " para unir todas las líneas (por si hay espacios o saltos de línea)
+
 
 # Comprobar si todas las entregas contienen el fichero de puntos y el justificante
 # Extraemos de igual forma los nombres de las carpetas de los justificantes
@@ -74,11 +75,12 @@ print(table(entregaron_ambos)) # TRUE significa que sí están los dos archivos
 
 library(dplyr)
 library(rio)
+library(stringr)
 
 # Crear el Data Frame combinando las variables del paso anterior
 evalua_df <- data.frame(
   apellidos = apellidos,
-  puntos = as.numeric(puntos_leidos), # Convertimos a número
+  puntos = as.numeric(str_extract(puntos_leidos, "\\d+")),
   NomFile = nombres_archivos,
   Puntos = puntos_leidos              # Se guarda el texto leído
 )
@@ -94,3 +96,27 @@ head(evalua_df)
 export(evalua_df, "NotasRIntermedio.xlsx")
 
 ```
+
+
+# Fusión de datos
+```{r}
+
+# Importar el archivo Excel con todos los alumnos matriculados
+alumnos_df <- import("./data/AlumnosTD25_26.xlsx")
+
+# Fusionar los datos (left_join())
+# (Manteniendo todos los registros del primer df y añadiendo los datos del segundo si hay coincidencias.)
+# Fusionar los datos (left_join())
+# Ahora que la tabla tiene datos, le decimos directamente que empareje las dos columnas de apellidos
+alumnos_notas <- left_join(alumnos_df, evalua_df, by = c("Apellido(s)" = "apellidos"))
+
+
+# Comprobamos la tabla final
+head(alumnos_notas)
+
+# Exportar el data frame final a Excel
+export(alumnos_notas, "AlumnosNotas.xlsx")
+
+```
+
+
